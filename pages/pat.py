@@ -36,4 +36,5 @@ with st.spinner("Calculating bunk count..."):
     new_df = get_bunk_subjects(st.session_state.df_pat, 80)
 if new_df.empty:
     st.info("You can't bunk any classes in any subject")
-st.dataframe(new_df, hide_index=True, use_container_width=True)
+else:
+    st.dataframe(new_df, hide_index=True, use_container_width=True)
