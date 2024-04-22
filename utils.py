@@ -111,7 +111,6 @@ def get_bunk_subjects(df, given_percentage):
         if total == 0:
             continue
         percentage = attended / (total+1) * 100
-        print(percentage)
         if  percentage > given_percentage:
             bunk_count[row["Course Name"]] = bunk_predictor(attended, total, given_percentage)
     new_df = pd.DataFrame(bunk_count.items(), columns=['Course Name', 'Bunk'])

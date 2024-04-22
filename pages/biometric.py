@@ -39,12 +39,8 @@ else:
         st.rerun()
     if st.session_state.current_bio < 80:
         with st.spinner("Calculating needed attendance..."):
-            if not st.session_state.being_absent["status"]:
-                st.header(
-                    f"Need to attend *{calculate_bio_attend_or_bunk(st.session_state.df_bio, 'attend')}* day(s)")
-            else:
-                st.header(
-                    f"Need to attend *{calculate_bio_attend_or_bunk(st.session_state.df_bio, 'attend', st.session_state.being_absent['count'])}* day(s)")
+            st.header(
+                f"Need to attend *{calculate_bio_attend_or_bunk(st.session_state.df_bio, 'attend')}* day(s)")
             st.write("to achieve 80% attendance")
     else:
         with st.spinner("Calculating bunk count..."):
