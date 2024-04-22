@@ -20,20 +20,18 @@ if "user_data" not in st.session_state:
     }
 
 if st.session_state.login_cookie is not None and st.session_state.user_data["Full Name"] is not None:
-    st.header("Click to logout")
-    if st.button("Logout"):
-        st.session_state.login_cookie = None
-        st.session_state.user_data = {
-            "Full Name": None,
-            "image_url": None,
-            "Branch": None,
-            "Roll Number": None,
-            "Semester": None,
-            "Section": None
-        }
-        st.success("Logged out successfully")
-        time.sleep(1)
-        st.rerun()
+    st.session_state.login_cookie = None
+    st.session_state.user_data = {
+        "Full Name": None,
+        "image_url": None,
+        "Branch": None,
+        "Roll Number": None,
+        "Semester": None,
+        "Section": None
+    }
+    st.success("Logged out successfully")
+    time.sleep(1)
+    st.rerun()
 else:
     with st.form("auth_form"):
         st.write("Login to Samvidha")

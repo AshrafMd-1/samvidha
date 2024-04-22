@@ -1,10 +1,9 @@
 import json
-import math as Math
 import re
-
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from Utils.prediction import attendance_predictor, bunk_predictor
 
 
 def login_to_samvidha(username_f, password_f):
@@ -68,28 +67,6 @@ def get_user_details(cookies):
     }
 
 
-def attendance_predictor(attended, total, given_percentage):
-    count = 0
-    percentage = (attended / total) * 100
-    while Math.floor(percentage) < given_percentage:
-        attended += 1
-        total += 1
-        count += 1
-        percentage = (attended / total) * 100
-
-    return count
-
-
-def bunk_predictor(attended, total, given_percentage):
-    count = 0
-    percentage = (attended / total) * 100
-    while Math.floor(percentage) > given_percentage:
-        total += 1
-        percentage = (attended / total) * 100
-        count += 1
-    return count
-
-
 def get_user_data_in_tables(cookies, url, table_selector):
     r = requests.get(url, cookies=cookies)
     soup = BeautifulSoup(r.text, features="html.parser")
@@ -118,8 +95,8 @@ def attendance_needed_subjects(df, given_percentage):
         total = int(row["Conducted"])
         if total == 0:
             continue
-        percentage = (attended / total) * 100
-        if Math.floor(percentage) < given_percentage:
+        percentage = attended / total * 100
+        if percentage < given_percentage:
             needed_attendance[row["Course Name"]] = attendance_predictor(attended, total, given_percentage)
     new_df = pd.DataFrame(needed_attendance.items(), columns=['Course Name', 'Attend'])
     new_df.insert(0, 'S.No', [i for i in range(1, len(new_df) + 1)], True)
@@ -133,57 +110,17 @@ def get_bunk_subjects(df, given_percentage):
         total = int(row["Conducted"])
         if total == 0:
             continue
-        percentage = (attended / total) * 100
-        if Math.floor(percentage) > given_percentage:
+        percentage = attended / (total+1) * 100
+        print(percentage)
+        if  percentage > given_percentage:
             bunk_count[row["Course Name"]] = bunk_predictor(attended, total, given_percentage)
     new_df = pd.DataFrame(bunk_count.items(), columns=['Course Name', 'Bunk'])
     new_df.insert(0, 'S.No', [i for i in range(1, len(new_df) + 1)], True)
     return new_df
 
 
-def get_user_bio(cookies):
-    bio_url = "https://samvidha.iare.ac.in/home?action=std_bio"
-    bio_table_selector = "body > div > div.content-wrapper > section.content > div > div.card-body > table"
-    r = requests.get(bio_url, cookies=cookies)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    full_table = soup.select_one(bio_table_selector)
-    if not full_table:
-        return None
-    table_header = [re.sub(r'[^\x00-\x7F]+', ' ', th.text.strip()) for th in full_table.select("th")]
-    table_data = []
-    for element in full_table.select("tr")[1:-1]:
-        row_data = []
-        for value in element.select("td"):
-            value = re.sub(r'[^\x00-\x7F]+', ' ', value.text.strip())
-            row_data.append(value)
-        if len(row_data) == 0:
-            continue
-        row_data.pop(-1)
-        table_data.append(row_data)
-    unwanted_columns = {"JNTUH - AEBAS", "Class Attendance(out of 7 periods)"}
-    table_header = [col for col in table_header if col not in unwanted_columns]
-    df = pd.DataFrame(table_data, columns=table_header)
-    df.loc[df["In Time"] == "", "In Time"] = "-"
-    return df
 
 
-def calculate_bio_attendance(df):
-    status = df["Status"].value_counts()
-    present = status["Present"]
-    absent = status["Absent"]
-    total = present + absent
-    percentage = (present / total) * 100
-    return percentage
 
 
-def calculate_bio_attend_or_bunk(df, kind):
-    status = df["Status"].value_counts()
-    present = int(status["Present"])
-    absent = int(status["Absent"])
-    total = present + absent
-    if kind == "attend":
-        attend = attendance_predictor(present, total, 75)
-        return attend
-    else:
-        bunk = bunk_predictor(present, total, 75)
-        return bunk
+
